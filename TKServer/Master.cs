@@ -10,6 +10,9 @@ namespace TKServer
     {
         private static Master master = null;
 
+        //List of available servers. URL -> IServer
+        private Dictionary<string, IServer> availableServers = new Dictionary<string, IServer>();
+
         //Keeps the last local timestamp of each server heartbeat. URL -> Timestamp
         private Dictionary<string, Int32> heartBeats = new Dictionary<string, Int32>();
 
@@ -37,9 +40,23 @@ namespace TKServer
             return (Int32)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
         }
 
-        public uint RegisterServer(string url)
+        public void RegisterServer(string url)
         {
-            throw new NotImplementedException();
+            System.Console.WriteLine("Add server {0}", url);
+            IServer remoteServer = (IServer)Activator.GetObject(typeof(IServer), url);
+            if (remoteServer == null)
+            {
+                System.Console.WriteLine("Could not connect to the remote server!");
+            }
+            else
+            {
+                lock (this.heartBeats)
+                {
+                    this.availableServers.Add(url, remoteServer);
+                    this.heartBeats.Add(url, unixTimestamp());
+                }
+            }
+
         }
 
         public bool RemoveServer(string url)
@@ -56,6 +73,7 @@ namespace TKServer
         {
             lock (this.heartBeats)
             {
+                Console.WriteLine(String.Format("Message from {0} : {1}", sender, msg));
                 this.heartBeats[sender] = unixTimestamp();
             }
         }
