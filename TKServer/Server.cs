@@ -51,9 +51,44 @@ namespace TKServer
         public bool LocalMaster { get; set; }
 
         public bool LocalServer { get; set; }
-        public String ServerAddress { get; set; }
-        public short ServerRemotingPort { get; set; }
-        public short ServerWsPort { get; set; }
+
+        private String serverAddress;
+        public String ServerAddress {
+            get
+            {
+                if (serverAddress == "")
+                {
+                    return MasterAddress;
+                }
+                else return serverAddress;
+            }
+            set { serverAddress = value; }
+        }
+
+        private short serverRemotingPort;
+        public short ServerRemotingPort 
+        {
+            get 
+            {
+                if (serverRemotingPort == 0)
+                    return MasterRemotingPort;
+                else return serverRemotingPort;
+            }
+            set { serverRemotingPort = value; }
+        }
+
+        private short serverWsPort;
+        public short ServerWsPort 
+        {
+            get
+            {
+                if (serverWsPort == 0)
+                    return MasterWsPort;
+                else return serverWsPort;
+            }
+            set { serverWsPort = value; }
+        }
+
         public String ServerSAMPort { get; set; }
         public String ServerUri
         {
@@ -89,6 +124,8 @@ namespace TKServer
         private IMaster RemoteMaster { get; set; }
         private string Uri { get; set; }
 
+        TcpChannel channel;
+
 
         public void InitServer(String MasterUri, String ServerUri)
         {
@@ -122,9 +159,9 @@ namespace TKServer
             }
         }
 
-        private TcpChannel StartServers(IList<ServerConfig> serverList)
+        private IDisposable StartServers(IList<ServerConfig> serverList)
         {
-            TcpChannel channel;
+            IDisposable webServer = null;
             ServerConfig localMaster = (from srv in serverList
                                   where srv.LocalMaster == true
                                   select srv).FirstOrDefault();
@@ -140,6 +177,10 @@ namespace TKServer
             {
                 Master masterServer = TKServer.Master.Singleton;
                 RemotingServices.Marshal(masterServer, "Master", typeof(Master));
+                string baseAddress = String.Format("http://{0}:{1}/",
+                    localMaster.MasterAddress,
+                    localMaster.MasterWsPort);
+                webServer = WebApp.Start<Startup>(url: baseAddress);
             }
             if(localServer != null) 
             {
@@ -153,7 +194,7 @@ namespace TKServer
                 //Lauch processess
             }
 
-            return channel;
+            return webServer;
         }
 
         private IList<ServerConfig> LoadConfigFile()
@@ -192,35 +233,18 @@ namespace TKServer
         {
             Server server = new Server();
             server.Uri = "tcp://localhost:8080/Server";
-            TcpChannel channel;
             IList<ServerConfig> serverList;
+            IDisposable webServer = null;
 
             //TODO: Remove
             server.LoadConfig = true;
-            server.ServerRemotingPort = 8080;
 
             if (server.LoadConfig)
             {
                 serverList = server.LoadConfigFile();
-                channel = server.StartServers(serverList);
+                webServer = server.StartServers(serverList);
             }
-
-
-
-            if (server.LocalMaster)
-            {
-                channel = new TcpChannel(server.MasterRemotingPort);
-                ChannelServices.RegisterChannel(channel, false);
-            }
-                
-            server.InitServer("", server.Uri);
-            
-
-            //TODO: remove
-            server.ServerAddress = "localhost";
-            server.ServerWsPort = 80;
-            string baseAddress = String.Format("http://{0}:{1}", server.ServerAddress, server.ServerWsPort);
-            IDisposable webServer = WebApp.Start<Startup>(url: baseAddress);            
+                        
             Console.WriteLine("Press any key to exit..");
             Console.ReadLine();
             webServer.Dispose();

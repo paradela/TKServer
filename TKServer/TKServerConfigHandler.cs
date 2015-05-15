@@ -85,14 +85,14 @@ namespace TKServer.Config
             set { this["address"] = value; }
         }
 
-        [ConfigurationProperty("wsPort", IsRequired = false, DefaultValue = 0)]
+        [ConfigurationProperty("wsPort", IsRequired = false, DefaultValue = (short)0)]
         public short WsPort
         {
             get { return (short)this["wsPort"]; }
             set { this["wsPort"] = value; }
         }
 
-        [ConfigurationProperty("remotingPort", IsRequired = false, DefaultValue = 0)]
+        [ConfigurationProperty("remotingPort", IsRequired = false, DefaultValue = (short)0)]
         public short RemotingPort
         {
             get { return (short)this["remotingPort"]; }

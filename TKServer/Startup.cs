@@ -17,9 +17,9 @@ namespace TKServer
                 name: "DefaultApi",
                 routeTemplate: "api/{controller}/{id}",
                 defaults: new { id = RouteParameter.Optional }
-            ); 
-            
-            appBuilder.UseWebApi(config);
+            );
+
+            appBuilder.UseWebApi(config); 
             appBuilder.MapWebSocketRoute<TKWebSocket>("/ws");
             //appBuilder.MapWebSocketPattern<TKWebSocket>("ws/(?<key>[a-zA-Z0-9]+)")
         }
