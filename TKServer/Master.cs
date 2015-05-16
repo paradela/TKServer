@@ -11,10 +11,7 @@ namespace TKServer
         private static Master master = null;
 
         //List of available servers. URL -> IServer
-        private Dictionary<string, IServer> availableServers = new Dictionary<string, IServer>();
-
-        //Keeps the last local timestamp of each server heartbeat. URL -> Timestamp
-        private Dictionary<string, Int32> heartBeats = new Dictionary<string, Int32>();
+        private Dictionary<string, WorkerServer> availableServers = new Dictionary<string, WorkerServer>();
 
         private Master() { }
 
@@ -50,10 +47,14 @@ namespace TKServer
             }
             else
             {
-                lock (this.heartBeats)
+                lock (this.availableServers)
                 {
-                    this.availableServers.Add(url, remoteServer);
-                    this.heartBeats.Add(url, unixTimestamp());
+                    var server = new WorkerServer();
+                    server.Uri = url;
+                    server.Working = false;
+                    server.HeartBeat = unixTimestamp();
+                    server.RemoteRef = remoteServer;
+                    this.availableServers.Add(url, server);
                 }
             }
 
@@ -71,17 +72,35 @@ namespace TKServer
 
         public void Ping(string sender, string msg)
         {
-            lock (this.heartBeats)
+            lock (this.availableServers)
             {
                 Console.WriteLine(String.Format("Message from {0} : {1}", sender, msg));
-                this.heartBeats[sender] = unixTimestamp();
+                this.availableServers[sender].HeartBeat = unixTimestamp();
             }
         }
 
         public string GetServer()
         {
-            return "ws://localhost/ws/abs12345";
+            var worker = "";
+            var minTimestamp = unixTimestamp() - 6;
+            lock (this.availableServers)
+            {
+                worker = (from server in availableServers.Values
+                               where server.Working == false && server.HeartBeat > minTimestamp
+                               orderby server.HeartBeat descending
+                               select server.Uri).FirstOrDefault();
+
+            }
+            return worker;
         }
 
+    }
+
+    public class WorkerServer
+    {
+        public String Uri { get; set; }
+        public bool Working { get; set; }
+        public Int32 HeartBeat { get; set; }
+        public IServer RemoteRef { get; set; }
     }
 }

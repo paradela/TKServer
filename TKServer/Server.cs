@@ -10,38 +10,6 @@ using System.Linq;
 
 namespace TKServer
 {
-    public class RemoteServer : MarshalByRefObject, IServer
-    {
-        private static RemoteServer server = null;
-
-        private string JobId { get; set; }
-
-        private RemoteServer() {}
-
-        public static RemoteServer Singleton
-        {
-            get
-            {
-                if (server == null)
-                    server = new RemoteServer();
-                return server;
-            }
-        }
-
-        public void SetNextJob(String id)
-        {
-            JobId = id;
-        }
-
-        public void RunCommand(String Id, IList<String> TKCmds, ExAPDU RdrCallback)
-        {
-            if (JobId != Id) return;
-            //Call TK
-            Console.WriteLine("Cenas");
-        }
-
-    }
-
     public class ServerConfig
     {
         public uint Id { get; set; }
@@ -90,7 +58,7 @@ namespace TKServer
         }
 
         public String ServerSAMPort { get; set; }
-        public String ServerUri
+        public String ServerTcpUri
         {
             get
             {
@@ -99,11 +67,20 @@ namespace TKServer
                     (ServerRemotingPort == 0)? MasterRemotingPort : ServerRemotingPort);
             }
         }
-        public String MasterUri
+        public String MasterTcpUri
         {
             get
             {
                 return String.Format("tcp://{0}:{1}/Master", MasterAddress, MasterRemotingPort);
+            }
+        }
+        public String ServerWSUri
+        {
+            get
+            {
+                return String.Format("ws://{0}:{1}/ws/",
+                    (ServerAddress == "") ? MasterAddress : ServerAddress,
+                    (ServerRemotingPort == 0) ? MasterRemotingPort : ServerRemotingPort);
             }
         }
     }
@@ -186,7 +163,7 @@ namespace TKServer
             {
                 RemoteServer remoteServer = RemoteServer.Singleton;
                 RemotingServices.Marshal(remoteServer, "Server", typeof(RemoteServer));
-                InitServer(localServer.MasterUri, localServer.ServerUri);
+                InitServer(localServer.MasterTcpUri, localServer.ServerTcpUri);
             }
 
             foreach(ServerConfig server in (from srv in serverList where srv.LocalServer != true && srv.LocalMaster != true select srv)) 

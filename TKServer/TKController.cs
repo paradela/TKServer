@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web.Http;
+using Card4B;
 
 namespace TKServer
 {
@@ -11,9 +12,9 @@ namespace TKServer
     public class TKController : ApiController
     {
         [Route("server")]
-        public IEnumerable<string> Get()
+        public String Get()
         {
-            return new string[] { "value1", "value2" };
+            return "ws://localhost:81/ws/tkcmd";
         }
     }
 }

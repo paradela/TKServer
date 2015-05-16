@@ -77,9 +77,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Card4B.TicketingKernel.cs" />
     <Compile Include="IMaster.cs" />
     <Compile Include="IServer.cs" />
     <Compile Include="Master.cs" />
+    <Compile Include="RemoteServer.cs" />
     <Compile Include="Server.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Startup.cs" />
