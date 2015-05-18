@@ -37,10 +37,12 @@ namespace TKServer
             return (Int32)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
         }
 
-        public void RegisterServer(string url)
+        public void RegisterServer(String Address, short RemotingPort, short WsPort)
         {
-            System.Console.WriteLine("Add server {0}", url);
-            IServer remoteServer = (IServer)Activator.GetObject(typeof(IServer), url);
+            string tcpUrl = String.Format("tcp://{0}:{1}/Server", Address, RemotingPort);
+            string wsUrl = String.Format("ws://{0}:{1}/ws", Address, WsPort);
+            System.Console.WriteLine("Add server {0}", tcpUrl);
+            IServer remoteServer = (IServer)Activator.GetObject(typeof(IServer), tcpUrl);
             if (remoteServer == null)
             {
                 System.Console.WriteLine("Could not connect to the remote server!");
@@ -50,11 +52,12 @@ namespace TKServer
                 lock (this.availableServers)
                 {
                     var server = new WorkerServer();
-                    server.Uri = url;
+                    server.TcpUri = tcpUrl;
+                    server.WsUri = wsUrl;
                     server.Working = false;
                     server.HeartBeat = unixTimestamp();
                     server.RemoteRef = remoteServer;
-                    this.availableServers.Add(url, server);
+                    this.availableServers.Add(tcpUrl, server);
                 }
             }
 
@@ -81,24 +84,32 @@ namespace TKServer
 
         public string GetServer()
         {
-            var worker = "";
             var minTimestamp = unixTimestamp() - 6;
             lock (this.availableServers)
             {
-                worker = (from server in availableServers.Values
-                               where server.Working == false && server.HeartBeat > minTimestamp
-                               orderby server.HeartBeat descending
-                               select server.Uri).FirstOrDefault();
-
+                var worker = (from server in availableServers.Values
+                              where server.Working == false && server.HeartBeat > minTimestamp
+                              orderby server.HeartBeat descending
+                              select server).FirstOrDefault();
+                if (worker != null)
+                {
+                    Random rnd = new Random();
+                    var job = String.Format("job-{0}", rnd.Next());
+                    worker.RemoteRef.SetNextJob(job);
+                    worker.Working = true;
+                    return String.Format("{0}/{1}",worker.WsUri, job);
+                }
+                else return null;
             }
-            return worker;
+            
         }
 
     }
 
     public class WorkerServer
     {
-        public String Uri { get; set; }
+        public String TcpUri { get; set; }
+        public String WsUri { get; set; }
         public bool Working { get; set; }
         public Int32 HeartBeat { get; set; }
         public IServer RemoteRef { get; set; }

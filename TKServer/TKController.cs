@@ -14,7 +14,9 @@ namespace TKServer
         [Route("server")]
         public String Get()
         {
-            return "ws://localhost:81/ws/tkcmd";
+            Master master = Master.Singleton;
+            string url = master.GetServer();
+            return url;
         }
     }
 }

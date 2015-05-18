@@ -28,8 +28,8 @@ namespace TKServer
             get
             {
                 return String.Format("tcp://{0}:{1}/Server", 
-                    (ServerAddress == "")? MasterAddress : ServerAddress, 
-                    (ServerRemotingPort == 0)? MasterRemotingPort : ServerRemotingPort);
+                    ServerAddress, 
+                    ServerRemotingPort);
             }
         }
         public String MasterTcpUri
@@ -43,38 +43,27 @@ namespace TKServer
         {
             get
             {
-                return String.Format("ws://{0}:{1}/ws/",
-                    (ServerAddress == "") ? MasterAddress : ServerAddress,
-                    (ServerRemotingPort == 0) ? MasterRemotingPort : ServerRemotingPort);
+                return String.Format("http://{0}:{1}/ws/",
+                    ServerAddress,
+                    ServerWsPort);
             }
         }
     }
 
     public class Server
     {
-        public bool LoadConfig { get; set; }
-
-        public bool LocalMaster { get; set; }
-        public string MasterAddress { get; set; }
-        public short MasterRemotingPort { get; set; }
-        public short MasterWsPort { get; set; }
-
-        public uint ServerId { get; set; }
-        public string ServerAddress { get; set; }
-        public short ServerWsPort { get; set; }
-        public short ServerRemotingPort { get; set; }
         private IMaster RemoteMaster { get; set; }
         private string Uri { get; set; }
 
         TcpChannel channel;
 
 
-        public void InitServer(String MasterUri, String ServerUri)
+        public void InitServer(String MasterUri, String Address, short RemotingPort, short WsPort)
         {
             this.RemoteMaster = (IMaster)Activator.GetObject(typeof(IMaster), MasterUri);
             try
             {
-                RemoteMaster.RegisterServer(ServerUri);
+                RemoteMaster.RegisterServer(Address, RemotingPort, WsPort);
 
                 System.Timers.Timer timer = new System.Timers.Timer();
                 timer.Interval = 3000;
@@ -132,14 +121,20 @@ namespace TKServer
                 if (id < 0 && server.Id != 0)
                 {
                     //start process with id
+                    System.Diagnostics.Process.Start("TKServer.exe", "" + server.Id);
                 }
                 else //launch local
                 {
+                    if (id > 0)
+                    {
+                        channel = new TcpChannel(server.ServerRemotingPort);
+                        ChannelServices.RegisterChannel(channel, false);
+                    }
                     RemoteServer remoteServer = RemoteServer.Singleton;
                     RemotingServices.Marshal(remoteServer, "Server", typeof(RemoteServer));
-                    InitServer(server.MasterTcpUri, server.ServerTcpUri);
+                    InitServer(server.MasterTcpUri, server.ServerAddress, server.ServerRemotingPort, server.ServerWsPort);
                     webServer = WebApp.Start<Startup>(url: server.ServerWSUri);
-                    this.Uri = server.ServerWSUri;
+                    this.Uri = server.ServerTcpUri;
                 }
             }
 
@@ -179,18 +174,17 @@ namespace TKServer
         public static void Main(string[] args)
         {
             Server server = new Server();
-            server.Uri = "tcp://localhost:8080/Server";
+            int Id = -1;
             IList<ServerConfig> serverList;
             IDisposable webServer = null;
 
-            //TODO: Remove
-            server.LoadConfig = true;
-
-            if (server.LoadConfig)
+            if (args.Length == 1)
             {
-                serverList = server.LoadConfigFile();
-                webServer = server.StartServers(serverList);
+                Id = Int32.Parse(args[0]);
             }
+
+            serverList = server.LoadConfigFile();
+            webServer = server.StartServers(serverList, Id);
                         
             Console.WriteLine("Press any key to exit..");
             Console.ReadLine();

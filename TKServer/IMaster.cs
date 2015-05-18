@@ -8,7 +8,7 @@ namespace TKServer
 {
     public interface IMaster
     {
-        void RegisterServer(String url);
+        void RegisterServer(String Address, short RemotingPort, short WsPort);
         bool RemoveServer(String url);
 
         void JobFinished(String id);
