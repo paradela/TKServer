@@ -16,46 +16,11 @@ namespace TKServer
         public String MasterAddress { get; set; }
         public short MasterWsPort { get; set; }
         public short MasterRemotingPort { get; set; }
-        public bool LocalMaster { get; set; }
 
-        public bool LocalServer { get; set; }
-
-        private String serverAddress;
-        public String ServerAddress {
-            get
-            {
-                if (serverAddress == "")
-                {
-                    return MasterAddress;
-                }
-                else return serverAddress;
-            }
-            set { serverAddress = value; }
-        }
-
-        private short serverRemotingPort;
-        public short ServerRemotingPort 
-        {
-            get 
-            {
-                if (serverRemotingPort == 0)
-                    return MasterRemotingPort;
-                else return serverRemotingPort;
-            }
-            set { serverRemotingPort = value; }
-        }
-
-        private short serverWsPort;
-        public short ServerWsPort 
-        {
-            get
-            {
-                if (serverWsPort == 0)
-                    return MasterWsPort;
-                else return serverWsPort;
-            }
-            set { serverWsPort = value; }
-        }
+        public bool MasterServer { get; set; }
+        public String ServerAddress { get; set; }
+        public short ServerRemotingPort { get; set; }
+        public short ServerWsPort { get; set; }
 
         public String ServerSAMPort { get; set; }
         public String ServerTcpUri
@@ -136,39 +101,46 @@ namespace TKServer
             }
         }
 
-        private IDisposable StartServers(IList<ServerConfig> serverList)
+        private IDisposable StartServers(IList<ServerConfig> serverList, int id = -1)
         {
             IDisposable webServer = null;
-            ServerConfig localMaster = (from srv in serverList
-                                  where srv.LocalMaster == true
-                                  select srv).FirstOrDefault();
-            ServerConfig localServer = (from srv in serverList
-                                  where srv.LocalServer == true
-                                  select srv).FirstOrDefault();
-
-            channel = new TcpChannel((localMaster != null)? localMaster.MasterRemotingPort : 
-                (localServer != null)? localServer.ServerRemotingPort : 0);
-            ChannelServices.RegisterChannel(channel, false);
-
-            if (localMaster != null)
+            if (id < 0)
             {
-                Master masterServer = TKServer.Master.Singleton;
-                RemotingServices.Marshal(masterServer, "Master", typeof(Master));
-                string baseAddress = String.Format("http://{0}:{1}/",
-                    localMaster.MasterAddress,
-                    localMaster.MasterWsPort);
-                webServer = WebApp.Start<Startup>(url: baseAddress);
-            }
-            if(localServer != null) 
-            {
-                RemoteServer remoteServer = RemoteServer.Singleton;
-                RemotingServices.Marshal(remoteServer, "Server", typeof(RemoteServer));
-                InitServer(localServer.MasterTcpUri, localServer.ServerTcpUri);
+                var master = (from srv in serverList
+                              where srv.MasterServer
+                              select srv).FirstOrDefault();
+
+                if (master != null)
+                {
+                    channel = new TcpChannel(master.MasterRemotingPort);
+                    ChannelServices.RegisterChannel(channel, false);
+                    Master masterServer = TKServer.Master.Singleton;
+                    RemotingServices.Marshal(masterServer, "Master", typeof(Master));
+                }
             }
 
-            foreach(ServerConfig server in (from srv in serverList where srv.LocalServer != true && srv.LocalMaster != true select srv)) 
+            IEnumerable<ServerConfig> list;
+            if (id > 0)
+                list = from srv in serverList
+                       where srv.Id == id
+                       select srv;
+            else list = serverList;
+
+            foreach(ServerConfig server in list) 
             {
                 //Lauch processess
+                if (id < 0 && server.Id != 0)
+                {
+                    //start process with id
+                }
+                else //launch local
+                {
+                    RemoteServer remoteServer = RemoteServer.Singleton;
+                    RemotingServices.Marshal(remoteServer, "Server", typeof(RemoteServer));
+                    InitServer(server.MasterTcpUri, server.ServerTcpUri);
+                    webServer = WebApp.Start<Startup>(url: server.ServerWSUri);
+                    this.Uri = server.ServerWSUri;
+                }
             }
 
             return webServer;
@@ -185,7 +157,6 @@ namespace TKServer
                 tmp.MasterAddress = serverConfig.ServerEndpoints.Address;
                 tmp.MasterRemotingPort = serverConfig.ServerEndpoints.RemotingPort;
                 tmp.MasterWsPort = serverConfig.ServerEndpoints.WsPort;
-                tmp.LocalMaster = serverConfig.ServerEndpoints.LocalMaster;
 
                 foreach (ServerElement endpointElement in serverConfig.ServerEndpoints)
                 {
@@ -193,13 +164,12 @@ namespace TKServer
                     server.MasterAddress = tmp.MasterAddress;
                     server.MasterRemotingPort = tmp.MasterRemotingPort;
                     server.MasterWsPort = tmp.MasterWsPort;
-                    server.LocalMaster = tmp.LocalMaster;
                     server.Id = endpointElement.Id;
-                    server.ServerAddress = endpointElement.Address;
-                    server.ServerRemotingPort = endpointElement.RemotingPort;
-                    server.ServerWsPort = endpointElement.WsPort;
+                    server.ServerAddress = (endpointElement.Address == "") ? server.MasterAddress = tmp.MasterAddress : endpointElement.Address;//optional
+                    server.ServerRemotingPort = (endpointElement.RemotingPort == 0)? server.MasterRemotingPort : endpointElement.RemotingPort;//optional
+                    server.ServerWsPort = (endpointElement.WsPort == 0)? server.MasterWsPort : endpointElement.WsPort;//optional
+                    server.MasterServer = endpointElement.MasterServer;//optional
                     server.ServerSAMPort = endpointElement.SamPort;
-                    server.LocalServer = endpointElement.LocalServer;
                     serverList.Add(server);
                 }
             }

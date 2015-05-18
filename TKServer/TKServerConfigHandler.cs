@@ -44,13 +44,6 @@ namespace TKServer.Config
             set { this["remotingPort"] = value; }
         }
 
-        [ConfigurationProperty("local", DefaultValue = false, IsRequired = false)]
-        public bool LocalMaster
-        {
-            get { return (bool)this["local"]; }
-            set { this["local"] = value; }
-        }
-
         protected override ConfigurationElement CreateNewElement()
         {
             return new ServerElement();
@@ -71,11 +64,11 @@ namespace TKServer.Config
             set { this["id"] = value; }
         }
 
-        [ConfigurationProperty("local", DefaultValue = false, IsRequired = false)]
-        public bool LocalServer
+        [ConfigurationProperty("master", DefaultValue = false, IsRequired = false)]
+        public bool MasterServer
         {
-            get { return (bool)this["local"]; }
-            set { this["local"] = value; }
+            get { return (bool)this["master"]; }
+            set { this["master"] = value; }
         }
 
         [ConfigurationProperty("address", IsRequired = false, DefaultValue = "")]
