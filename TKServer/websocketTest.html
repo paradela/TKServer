@@ -5,10 +5,20 @@
     <script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-2.0.3.min.js"></script>
     <script type="text/javascript">
         var ws;
+        var uri;
         $().ready(function () {
+            $.get("http://localhost:81/ws/api/tk/server",
+                  null,
+                  function (value) {
+                      uri = value["URL"];
+                      $("#spanStatus").text(uri);
+                  },
+                  "json"
+                  );
             $("#btnConnect").click(function () {
                 $("#spanStatus").text("connecting");
-                ws = new WebSocket("ws://localhost:82/ws");
+                if (uri == null) return;
+                ws = new WebSocket(uri);
                 ws.onopen = function () {
                     $("#spanStatus").text("connected");
                 };
@@ -21,6 +31,7 @@
                 ws.onclose = function () {
                     $("#spanStatus").text("disconnected");
                 };
+               
             });
             $("#btnSend").click(function () {
                 if (ws.readyState == WebSocket.OPEN) {

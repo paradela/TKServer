@@ -12,11 +12,20 @@ namespace TKServer
     public class TKController : ApiController
     {
         [Route("server")]
-        public String Get()
+        public object Get()
         {
             Master master = Master.Singleton;
             string url = master.GetServer();
-            return url;
+            
+            return new { URL = url };
+        }
+
+        [Route("server/execute")]
+        public object Post([FromBody] String id, [FromBody] String tkmsg, [FromBody] String card)
+        {
+            RemoteServer server = RemoteServer.Singleton;
+            server.RunCommand(id, tkmsg, card);
+            return new { tkmsg_out = "<tkmsg><complete></complete></tkmsg>", card_messages = "{ \"messages\"= []" };
         }
     }
 }

@@ -11,7 +11,9 @@ namespace TKServer
     {
         private static RemoteServer server = null;
 
-        private string JobId { get; set; }
+        private String JobId { get; set; }
+        private String ActualCard { get; set; }
+        private ExAPDU RdrCallback { get; set; }
         private TicketingKernel tk { get; set; }
 
         private RemoteServer() 
@@ -29,33 +31,56 @@ namespace TKServer
             }
         }
 
-        public void SetNextJob(String id)
+        public override object InitializeLifetimeService()
         {
-            JobId = id;
+            return null;
         }
 
-        public void RunCommand(String Id, IList<String> TKCmds, ExAPDU RdrCallback)
+        public void SetNextJob(String id) 
         {
-            string tkmsg_in;
+            lock (JobId)
+            {
+                JobId = id;
+            }
+        }
+
+        public void RunCommand(String Id, String TKMsg, String Card = null, ExAPDU RdrCallback = null)
+        {
             string tkmsg_out;
             bool ok;
+            lock (JobId)
+            {
+                if (JobId != Id || (Card == null && RdrCallback == null)) return;
+                //Call TK
 
-            if (JobId != Id) return;
-            //Call TK
+                this.ActualCard = Card;
+                this.RdrCallback = RdrCallback;
 
-            tkmsg_in = "<tkmsg><query><version/></query></tkmsg>";
-            Console.Write(string.Format("########## TKCommand IN:\n{0}\n", tkmsg_in));
-            ok = tk.Command(tkmsg_in, out tkmsg_out, TKNotify);
-            Console.Write(string.Format("########## TKCommand OUT: {0}\n{1}\n", (ok ? "OK" : "ERROR!"), tkmsg_out));
+                Console.Write(string.Format("########## TKCommand IN:\n{0}\n", TKMsg));
+                ok = tk.Command(TKMsg, out tkmsg_out, TKCallback);
+                Console.Write(string.Format("########## TKCommand OUT: {0}\n{1}\n", (ok ? "OK" : "ERROR!"), tkmsg_out));
 
-            Console.WriteLine("Cenas");
+                if (!ok) return;
+
+                tk.Activity();
+                this.RdrCallback = null;
+                this.ActualCard = null;
+            }
         }
 
-        static void TKNotify(uint in_status, uint in_result, string tkmsg_input, out uint out_status, out uint out_result, out string tkmsg_output)
+        private void TKCallback(uint in_status, uint in_result, string tkmsg_input, out uint out_status, out uint out_result, out string tkmsg_output)
         {
             out_status = out_result = 0;
             tkmsg_output = "";
 
+            LogCallbackMessage(in_status, in_result, tkmsg_input);
+
+            //Parse tkmsg_input to detect notify messages or card read/writes to the 
+
+        }
+
+        private void LogCallbackMessage(uint in_status, uint in_result, string tkmsg_input)
+        {
             Console.Write(string.Format("########## TKNotify [{0:X8} | {1:X8}]:\n", in_status, in_result));
 
             switch (in_status)
@@ -115,7 +140,6 @@ namespace TKServer
             }
 
             Console.Write(string.Format("{0}\n", tkmsg_input));
-
         }
 
     }
