@@ -12,9 +12,12 @@ namespace TKServer
         private static RemoteServer server = null;
 
         private String JobId { get; set; }
-        private String ActualCard { get; set; }
+        private byte[] ActualCard { get; set; }
         private ExAPDU RdrCallback { get; set; }
+        private IList<CTSWriteOperation> Operations { get; set; }
+        private String TKMsgOut { get; set; }
         private TicketingKernel tk { get; set; }
+        public IMaster MasterRef { get; set; }
 
         private RemoteServer() 
         {
@@ -44,27 +47,30 @@ namespace TKServer
             }
         }
 
-        public void RunCommand(String Id, String TKMsg, String Card = null, ExAPDU RdrCallback = null)
+        public void RunCommand(String Id, String TKMsgIn, out String TKMsgOut, out IList<CTSWriteOperation> CardOperations, String Card = null, ExAPDU RdrCallback = null)
         {
-            string tkmsg_out;
             bool ok;
+            Operations = CardOperations = new List<CTSWriteOperation>();
+            TKMsgOut = "";
+
             lock (JobId)
             {
                 if (JobId != Id || (Card == null && RdrCallback == null)) return;
                 //Call TK
 
-                this.ActualCard = Card;
+                this.ActualCard = System.Convert.FromBase64String(Card);
                 this.RdrCallback = RdrCallback;
 
-                Console.Write(string.Format("########## TKCommand IN:\n{0}\n", TKMsg));
-                ok = tk.Command(TKMsg, out tkmsg_out, TKCallback);
-                Console.Write(string.Format("########## TKCommand OUT: {0}\n{1}\n", (ok ? "OK" : "ERROR!"), tkmsg_out));
+                Console.Write(string.Format("########## TKCommand IN:\n{0}\n", TKMsgIn));
+                ok = tk.Command(TKMsgIn, out TKMsgOut, TKCallback);
+                Console.Write(string.Format("########## TKCommand OUT: {0}\n{1}\n", (ok ? "OK" : "ERROR!"), TKMsgOut));
 
                 if (!ok) return;
-
                 tk.Activity();
+                TKMsgOut = this.TKMsgOut;
                 this.RdrCallback = null;
                 this.ActualCard = null;
+                if (MasterRef != null) MasterRef.JobFinished(Id);
             }
         }
 
@@ -76,6 +82,8 @@ namespace TKServer
             LogCallbackMessage(in_status, in_result, tkmsg_input);
 
             //Parse tkmsg_input to detect notify messages or card read/writes to the 
+
+            //Operations.Add(new CTSWriteOperation()); //Example
 
         }
 
@@ -142,5 +150,21 @@ namespace TKServer
             Console.Write(string.Format("{0}\n", tkmsg_input));
         }
 
+    }
+
+    public class CTSWriteOperation
+    {
+        public int Address { get; set; }
+        public int Offset { get; set; }
+        public String Data { get; set; }
+
+        public CTSWriteOperation(int address, int offset, string data)
+        {
+            Address = address;
+            Offset = offset;
+            Data = data;
+        }
+
+        public CTSWriteOperation() { }
     }
 }

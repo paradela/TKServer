@@ -23,9 +23,13 @@ namespace TKServer
         [Route("server/execute")]
         public object Post([FromBody] String id, [FromBody] String tkmsg, [FromBody] String card)
         {
+            IList<CTSWriteOperation> operations;
+            String tkmsgout;
             RemoteServer server = RemoteServer.Singleton;
-            server.RunCommand(id, tkmsg, card);
-            return new { tkmsg_out = "<tkmsg><complete></complete></tkmsg>", card_messages = "{ \"messages\"= []" };
+            //server.RunCommand(id, tkmsg, CardOperations: operations);
+            server.RunCommand(id, tkmsg, out tkmsgout, out operations, card);
+
+            return new { tkmsg_out = tkmsgout, card_messages = operations };
         }
     }
 }

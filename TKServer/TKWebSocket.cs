@@ -34,7 +34,9 @@ namespace TKServer
             //else //new Command
             //{
             RemoteServer server = RemoteServer.Singleton;
-            server.RunCommand("id from message", null, new ExAPDU(SendRcvMessage));
+            IList<CTSWriteOperation> operations;
+            string tjmsg;
+            server.RunCommand("id", "", out tjmsg, out operations, "", new ExAPDU(SendRcvMessage));
             //}
             Console.WriteLine(String.Format("Message Received"));
             

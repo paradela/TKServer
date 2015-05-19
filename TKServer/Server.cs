@@ -133,6 +133,7 @@ namespace TKServer
                     RemoteServer remoteServer = RemoteServer.Singleton;
                     RemotingServices.Marshal(remoteServer, "Server", typeof(RemoteServer));
                     InitServer(server.MasterTcpUri, server.ServerAddress, server.ServerRemotingPort, server.ServerWsPort);
+                    remoteServer.MasterRef = this.RemoteMaster;
                     webServer = WebApp.Start<Startup>(url: server.ServerWSUri);
                     this.Uri = server.ServerTcpUri;
                 }

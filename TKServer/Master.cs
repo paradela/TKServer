@@ -70,7 +70,14 @@ namespace TKServer
 
         public void JobFinished(string id)
         {
-            throw new NotImplementedException();
+            lock (this.availableServers)
+            {
+                var worker = (from server in availableServers.Values
+                              where server.Working = true && server.CurrentId == id
+                              select server).FirstOrDefault();
+                if (worker != null)
+                    worker.Working = false;
+            }
         }
 
         public void Ping(string sender, string msg)
@@ -97,6 +104,7 @@ namespace TKServer
                     var job = String.Format("job-{0}", rnd.Next());
                     worker.RemoteRef.SetNextJob(job);
                     worker.Working = true;
+                    worker.CurrentId = job;
                     return String.Format("{0}/{1}",worker.WsUri, job);
                 }
                 else return null;
@@ -111,6 +119,7 @@ namespace TKServer
         public String TcpUri { get; set; }
         public String WsUri { get; set; }
         public bool Working { get; set; }
+        public String CurrentId { get; set; }
         public Int32 HeartBeat { get; set; }
         public IServer RemoteRef { get; set; }
     }
