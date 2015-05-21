@@ -19,6 +19,9 @@ namespace TKServer
         private TicketingKernel tk { get; set; }
         public IMaster MasterRef { get; set; }
 
+        private object Lock = new object();
+        private bool Working = false;
+
         private RemoteServer() 
         {
             tk = new TicketingKernel();
@@ -41,28 +44,46 @@ namespace TKServer
 
         public void SetNextJob(String id) 
         {
-            lock (JobId)
+            lock (Lock)
             {
                 JobId = id;
+                Working = false;
+                System.Timers.Timer timer = new System.Timers.Timer();
+                timer.Interval = 4000;
+                timer.Elapsed += delegate { timer.Stop(); WasJobDone(id); };
+                timer.Start();
+            }
+        }
+
+        private void WasJobDone(String Id)
+        {
+            lock (Lock)
+            {
+                if (JobId == Id && Working != true)
+                {
+                    if (MasterRef != null) MasterRef.JobFinished(Id);
+                    JobId = null;
+                    Working = false;
+                }
             }
         }
 
         public void RunCommand(String Id, String TKMsgIn, out String TKMsgOut, out IList<CTSWriteOperation> CardOperations, String Card = null, ExAPDU RdrCallback = null)
         {
-            bool ok;
-            Operations = CardOperations = new List<CTSWriteOperation>();
-            TKMsgOut = "";
-
-            lock (JobId)
+            lock (Lock)
             {
+                bool ok = false;
+                Operations = CardOperations = new List<CTSWriteOperation>();
+                TKMsgOut = "";
+
                 if (JobId != Id || (Card == null && RdrCallback == null)) return;
                 //Call TK
-
+                Working = true;
                 this.ActualCard = System.Convert.FromBase64String(Card);
                 this.RdrCallback = RdrCallback;
 
                 Console.Write(string.Format("########## TKCommand IN:\n{0}\n", TKMsgIn));
-                ok = tk.Command(TKMsgIn, out TKMsgOut, TKCallback);
+                //ok = tk.Command(TKMsgIn, out TKMsgOut, TKCallback);
                 Console.Write(string.Format("########## TKCommand OUT: {0}\n{1}\n", (ok ? "OK" : "ERROR!"), TKMsgOut));
 
                 if (!ok) return;
@@ -71,6 +92,7 @@ namespace TKServer
                 this.RdrCallback = null;
                 this.ActualCard = null;
                 if (MasterRef != null) MasterRef.JobFinished(Id);
+                Working = false;
             }
         }
 

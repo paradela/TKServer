@@ -40,7 +40,7 @@ namespace TKServer
         public void RegisterServer(String Address, short RemotingPort, short WsPort)
         {
             string tcpUrl = String.Format("tcp://{0}:{1}/Server", Address, RemotingPort);
-            string wsUrl = String.Format("ws://{0}:{1}/ws", Address, WsPort);
+            string wsUrl = String.Format("http://{0}:{1}/api/tk/server/", Address, WsPort);
             System.Console.WriteLine("Add server {0}", tcpUrl);
             IServer remoteServer = (IServer)Activator.GetObject(typeof(IServer), tcpUrl);
             if (remoteServer == null)
@@ -84,7 +84,6 @@ namespace TKServer
         {
             lock (this.availableServers)
             {
-                Console.WriteLine(String.Format("Message from {0} : {1}", sender, msg));
                 this.availableServers[sender].HeartBeat = unixTimestamp();
             }
         }
