@@ -8,25 +8,29 @@ using Card4B;
 
 namespace TKServer
 {
-    [RoutePrefix("api/tk")]
+    public class ProductLoad
+    {
+        public String tkmsg { get; set; }
+        public String card { get; set; }
+    }
+
     public class TKController : ApiController
     {
-        [Route("server")]
         public object Get()
         {
             Master master = Master.Singleton;
             string url = master.GetServer();
+
             
             return new { URL = url };
         }
 
-        [Route("server/{id}")]
-        public object Post([FromUri] String id, [FromBody] String tkmsg, [FromBody] String card)
+        public object Post([FromUri] String id, [FromBody] ProductLoad body)
         {
             IList<CTSWriteOperation> operations;
             String tkmsgout;
             RemoteServer server = RemoteServer.Singleton;
-            server.RunCommand(id, tkmsg, out tkmsgout, out operations, card);
+            server.RunCommand("", "", out tkmsgout, out operations, "");
 
             return new { tkmsg_out = tkmsgout, card_messages = operations };
         }
