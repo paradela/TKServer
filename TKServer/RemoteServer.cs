@@ -12,7 +12,7 @@ namespace TKServer
         private static RemoteServer server = null;
 
         private String JobId { get; set; }
-        private byte[] ActualCard { get; set; }
+        private RemoteCardData ActualCard { get; set; }
         private ExAPDU RdrCallback { get; set; }
         private IList<CTSWriteOperation> Operations { get; set; }
         private String TKMsgOut { get; set; }
@@ -68,7 +68,7 @@ namespace TKServer
             }
         }
 
-        public void RunCommand(String Id, String TKMsgIn, out String TKMsgOut, out IList<CTSWriteOperation> CardOperations, String Card = null, ExAPDU RdrCallback = null)
+        public void RunCommand(String Id, String TKMsgIn, out String TKMsgOut, out IList<CTSWriteOperation> CardOperations, Card Card = null, ExAPDU RdrCallback = null)
         {
             lock (Lock)
             {
@@ -79,7 +79,7 @@ namespace TKServer
                 if (JobId != Id || (Card == null && RdrCallback == null)) return;
                 //Call TK
                 Working = true;
-                this.ActualCard = System.Convert.FromBase64String(Card);
+                if(Card != null) this.ActualCard = new RemoteCardData(Card);
                 this.RdrCallback = RdrCallback;
 
                 Console.Write(string.Format("########## TKCommand IN:\n{0}\n", TKMsgIn));
@@ -216,5 +216,42 @@ namespace TKServer
         }
 
         public CTSWriteOperation() { }
+    }
+
+    public class RemoteCardData
+    {
+        private int type;
+        public int Type
+        {
+            get
+            {
+                return type;
+            }
+        }
+        private byte[] data;
+        public byte[] Data
+        {
+            get
+            {
+                return data;
+            }
+        }
+
+        public RemoteCardData(Card card)
+        {
+            data = System.Convert.FromBase64String(card.data);
+            switch (card.type)
+            {
+                case "ISO_B":
+                    type = 1 << 3;
+                    break;
+                case "CTS512B":
+                    type = 1 << 7;
+                    break;
+                default:
+                    type = -1;
+                    break;
+            }
+        }
     }
 }

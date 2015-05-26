@@ -11,7 +11,13 @@ namespace TKServer
     public class ProductLoad
     {
         public String tkmsg { get; set; }
-        public String card { get; set; }
+        public Card card { get; set; }
+    }
+
+    public class Card
+    {
+        public String type { get; set; }
+        public String data { get; set; }
     }
 
     public class TKController : ApiController
@@ -30,7 +36,7 @@ namespace TKServer
             IList<CTSWriteOperation> operations;
             String tkmsgout;
             RemoteServer server = RemoteServer.Singleton;
-            server.RunCommand("", "", out tkmsgout, out operations, "");
+            server.RunCommand(id, body.tkmsg, out tkmsgout, out operations, body.card);
 
             return new { tkmsg_out = tkmsgout, card_messages = operations };
         }
