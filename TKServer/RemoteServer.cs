@@ -83,7 +83,7 @@ namespace TKServer
                 this.RdrCallback = RdrCallback;
 
                 Console.Write(string.Format("########## TKCommand IN:\n{0}\n", TKMsgIn));
-                //ok = tk.Command(TKMsgIn, out TKMsgOut, TKCallback);
+                ok = tk.Command(TKMsgIn, out TKMsgOut, TKCallback);
                 Console.Write(string.Format("########## TKCommand OUT: {0}\n{1}\n", (ok ? "OK" : "ERROR!"), TKMsgOut));
 
                 if (!ok) return;
@@ -96,6 +96,20 @@ namespace TKServer
             }
         }
 
+        private string CTS512B_Read(string tkmsg_in)
+        {
+            string tkmsg_out = "";
+
+            return tkmsg_out;
+        }
+
+        private string CTS512B_Update(string tkmsg_in)
+        {
+            string tkmsg_out = "";
+
+            return tkmsg_out;
+        }
+
         private void TKCallback(uint in_status, uint in_result, string tkmsg_input, out uint out_status, out uint out_result, out string tkmsg_output)
         {
             out_status = out_result = 0;
@@ -104,6 +118,20 @@ namespace TKServer
             LogCallbackMessage(in_status, in_result, tkmsg_input);
 
             //Parse tkmsg_input to detect notify messages or card read/writes to the 
+
+            switch (in_status)
+            {
+                case (uint)TicketingKernel.Status.SEARCHCARD:
+                    break;
+                case (uint)TicketingKernel.Status.ANTENNAOFF:
+                    break;
+                case (uint)TicketingKernel.Status.CALYPSO_TXRXTPDU:
+                    break;
+                case (uint)TicketingKernel.Status.CTS512B_READ:
+                    break;
+                case (uint)TicketingKernel.Status.CTS512B_UPDATE:
+                    break;
+            }
 
             //Operations.Add(new CTSWriteOperation()); //Example
 

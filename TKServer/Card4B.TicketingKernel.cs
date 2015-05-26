@@ -22,7 +22,12 @@ namespace Card4B {
       COUPLERINFO = 0x544B0002,
       COUPLERERROR = 0x544B0003,
       COUPLERSAMCHECK = 0x544B0004,
-      COUPLERSAMADD = 0x544B0005
+      COUPLERSAMADD = 0x544B0005,
+      ANTENNAOFF = 0x544C0000,
+      SEARCHCARD = 0x544C0001,
+      CALYPSO_TXRXTPDU = 0x544C0002,
+      CTS512B_READ = 0x544C0003,
+      CTS512B_UPDATE = 0x544C0004
     }
 
     public enum Result : uint {
@@ -478,19 +483,19 @@ namespace Card4B {
 #if WindowsCE || PocketPC
       [DllImport("tkernel_ce.dll")]
 #else
-      [DllImport("tkernel_32.dll", CallingConvention = CallingConvention.Cdecl)]
+      [DllImport("tklib32.dll", CallingConvention = CallingConvention.Cdecl)]
 #endif
       public static extern int Command(IntPtr tkmsg_input, ref IntPtr tkmsg_output, TKNotifyCallback async_notify);
 #if WindowsCE || PocketPC
       [DllImport("tkernel_ce.dll")]
 #else
-      [DllImport("tkernel_32.dll", CallingConvention = CallingConvention.Cdecl)]
+      [DllImport("tklib32.dll", CallingConvention = CallingConvention.Cdecl)]
 #endif
       public static extern int Cancel();
 #if WindowsCE || PocketPC
       [DllImport("tkernel_ce.dll")]
 #else
-      [DllImport("tkernel_32.dll", CallingConvention = CallingConvention.Cdecl)]
+      [DllImport("tklib32.dll", CallingConvention = CallingConvention.Cdecl)]
 #endif
       public static extern int Activity(long local_time, long utc_time);
     }
