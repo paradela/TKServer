@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Card4B;
+using System.Xml;
+using System.IO;
 
 namespace TKServer
 {
@@ -16,6 +18,8 @@ namespace TKServer
         private ExAPDU RdrCallback { get; set; }
         private IList<CTSWriteOperation> Operations { get; set; }
         private String TKMsgOut { get; set; }
+        private uint TKStatus { get; set; }
+        private uint TKResult { get; set; }
         private TicketingKernel tk { get; set; }
         public IMaster MasterRef { get; set; }
 
@@ -89,6 +93,10 @@ namespace TKServer
                 if (!ok) return;
                 tk.Activity();
                 TKMsgOut = this.TKMsgOut;
+                if (this.TKResult != 0)
+                {
+                    CardOperations.Clear();
+                }
                 this.RdrCallback = null;
                 this.ActualCard = null;
                 if (MasterRef != null) MasterRef.JobFinished(Id);
@@ -96,45 +104,117 @@ namespace TKServer
             }
         }
 
+        private string SearchCard(string tkmsg_in)
+        {
+            string tkmsg_out = null;
+            using (XmlReader reader = XmlReader.Create(new StringReader(tkmsg_in)))
+            {
+                reader.ReadToFollowing("card_to_search");
+                int card_type = reader.ReadElementContentAsInt();
+                if ((card_type & ActualCard.Type) != 0)
+                {
+                    tkmsg_out = String.Format(
+                        "<tkmsg><search_card><card_found>{0}</card_found></search_card></tkmsg>",
+                        ActualCard.Type
+                        );
+                }
+            }
+
+            return tkmsg_out;
+        }
+
         private string CTS512B_Read(string tkmsg_in)
         {
-            string tkmsg_out = "";
+            string tkmsg_out = null;
+            using (XmlReader reader = XmlReader.Create(new StringReader(tkmsg_in)))
+            {
+                reader.ReadToFollowing("read");
+                reader.MoveToFirstAttribute();
+                uint address = UInt32.Parse(reader.Value);
+                reader.MoveToNextAttribute();
+                uint len = UInt32.Parse(reader.Value);
+
+                if (address >= 0 && len > 0 && address + len > 0)
+                {
+                    byte[] data = this.ActualCard.Read(address, len);
+                    if (data.Length != len) return null;
+                    tkmsg_out = String.Format(
+                        "<tkmsg><cts512b><data>{0}</data></cts512b></tkmsg>",
+                        System.Convert.ToBase64String(data)
+                        );
+                }
+            }
 
             return tkmsg_out;
         }
 
         private string CTS512B_Update(string tkmsg_in)
         {
-            string tkmsg_out = "";
+            string tkmsg_out = null;
+            using (XmlReader reader = XmlReader.Create(new StringReader(tkmsg_in)))
+            {
+                reader.ReadToFollowing("update");
+                string base64 = reader.ReadElementContentAsString();
+                reader.MoveToFirstAttribute();
+                uint address = UInt32.Parse(reader.Value);
+                reader.MoveToNextAttribute();
+                uint len = UInt32.Parse(reader.Value);
+                
+
+                if (address >= 0 && len > 0 && address + len > 0 && base64.Length > 0)
+                {
+                    var write = new CTSWriteOperation();
+                    write.Data = base64;
+                    write.Address = (int)address;
+                    write.Len = (int)len;
+                    Operations.Add(write);
+                }
+            }
 
             return tkmsg_out;
         }
 
         private void TKCallback(uint in_status, uint in_result, string tkmsg_input, out uint out_status, out uint out_result, out string tkmsg_output)
         {
-            out_status = out_result = 0;
+            out_status = in_status;
+            out_result = 0;
             tkmsg_output = "";
 
             LogCallbackMessage(in_status, in_result, tkmsg_input);
 
-            //Parse tkmsg_input to detect notify messages or card read/writes to the 
-
-            switch (in_status)
+            if (in_status == (uint)TicketingKernel.Status.LOAD)
             {
-                case (uint)TicketingKernel.Status.SEARCHCARD:
-                    break;
-                case (uint)TicketingKernel.Status.ANTENNAOFF:
-                    break;
-                case (uint)TicketingKernel.Status.CALYPSO_TXRXTPDU:
-                    break;
-                case (uint)TicketingKernel.Status.CTS512B_READ:
-                    break;
-                case (uint)TicketingKernel.Status.CTS512B_UPDATE:
-                    break;
+                this.TKMsgOut = tkmsg_input;
+                this.TKStatus = in_status;
+                this.TKResult = in_result;
             }
+            else if (in_status >= (uint)TicketingKernel.Status.ANTENNAOFF && in_status <= (uint)TicketingKernel.Status.CTS512B_UPDATE)
+            {
+                switch (in_status)
+                {
+                    case (uint)TicketingKernel.Status.SEARCHCARD:
+                        tkmsg_output = SearchCard(tkmsg_input);
+                        break;
+                    case (uint)TicketingKernel.Status.ANTENNAOFF:
+                        break;
+                    case (uint)TicketingKernel.Status.CALYPSO_TXRXTPDU:
+                        break;
+                    case (uint)TicketingKernel.Status.CTS512B_READ:
+                        tkmsg_output = CTS512B_Read(tkmsg_input);
+                        break;
+                    case (uint)TicketingKernel.Status.CTS512B_UPDATE:
+                        tkmsg_output = CTS512B_Update(tkmsg_input);
+                        break;
+                    default:
+                        tkmsg_output = null;
+                        break;
+                }
 
-            //Operations.Add(new CTSWriteOperation()); //Example
-
+                if (tkmsg_output != null)
+                    out_result = (uint)TicketingKernel.Result.OK;
+                else
+                    out_result = (uint)TicketingKernel.Result.GENERAL_ERROR;
+            }
         }
 
         private void LogCallbackMessage(uint in_status, uint in_result, string tkmsg_input)
@@ -205,13 +285,13 @@ namespace TKServer
     public class CTSWriteOperation
     {
         public int Address { get; set; }
-        public int Offset { get; set; }
+        public int Len { get; set; }
         public String Data { get; set; }
 
-        public CTSWriteOperation(int address, int offset, string data)
+        public CTSWriteOperation(int address, int len, string data)
         {
             Address = address;
-            Offset = offset;
+            Len = len;
             Data = data;
         }
 
@@ -252,6 +332,28 @@ namespace TKServer
                     type = -1;
                     break;
             }
+        }
+
+        public byte[] Read(uint Address, uint Length)
+        {
+
+            if ((Address + Length) <= data.Length && Length > 0)
+            {
+                byte[] dataRead = new byte[Length];
+                System.Array.Copy(data, Address, dataRead, 0, Length);
+                return dataRead;
+            }
+            return new byte[0];
+        }
+
+        public bool Write(uint Address, uint Length, byte[] NewData)
+        {
+            if ((Address + Length) <= data.Length && Length > 0 && Address >= 0)
+            {
+                System.Array.Copy(NewData, 0, data, Address, Length);
+                return true;
+            }
+            else return false;
         }
     }
 }
