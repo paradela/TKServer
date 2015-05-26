@@ -43,7 +43,7 @@ namespace TKServer
         {
             get
             {
-                return String.Format("http://{0}:{1}/ws/",
+                return String.Format("http://{0}:{1}",
                     ServerAddress,
                     ServerWsPort);
             }

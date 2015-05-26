@@ -7,6 +7,17 @@
         var ws;
         var uri;
         $().ready(function () {
+            $("#btnPost").click(function () {
+                $.post(
+                    "http://localhost:81/api/tk/1234",
+                    { tkmsg: "<tkmsg></tkmsg>", card: "carddata" },
+                    function (data) {
+
+                    },
+                    "json"
+                    );
+            }
+            );
             $.get("http://localhost:81/ws/api/tk/server",
                   null,
                   function (value) {
@@ -53,5 +64,6 @@
     <input type="text" id="textInput" />
     <input type="button" value="Send" id="btnSend" /><br />
     <span id="spanStatus">(display)</span>
+    <input type="button" value="POST" id="btnPost" /><br />
 </body>
 </html> 

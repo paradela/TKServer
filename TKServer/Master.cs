@@ -40,7 +40,7 @@ namespace TKServer
         public void RegisterServer(String Address, short RemotingPort, short WsPort)
         {
             string tcpUrl = String.Format("tcp://{0}:{1}/Server", Address, RemotingPort);
-            string wsUrl = String.Format("http://{0}:{1}/api/tk/server/", Address, WsPort);
+            string wsUrl = String.Format("http://{0}:{1}", Address, WsPort);
             System.Console.WriteLine("Add server {0}", tcpUrl);
             IServer remoteServer = (IServer)Activator.GetObject(typeof(IServer), tcpUrl);
             if (remoteServer == null)
@@ -104,7 +104,7 @@ namespace TKServer
                     worker.RemoteRef.SetNextJob(job);
                     worker.Working = true;
                     worker.CurrentId = job;
-                    return String.Format("{0}/{1}",worker.WsUri, job);
+                    return String.Format("{0}/api/tk/{1}",worker.WsUri, job);
                 }
                 else return null;
             }
