@@ -17,6 +17,7 @@ namespace TKServer
         private RemoteCardData ActualCard { get; set; }
         private ExAPDU RdrCallback { get; set; }
         private IList<CTSWriteOperation> Operations { get; set; }
+        private bool TK_Initialized { get; set; }
         private String TKMsgOut { get; set; }
         private uint TKStatus { get; set; }
         private uint TKResult { get; set; }
@@ -29,6 +30,7 @@ namespace TKServer
         private RemoteServer() 
         {
             tk = new TicketingKernel();
+            TK_Initialized = false;
         }
 
         public static RemoteServer Singleton
@@ -36,8 +38,35 @@ namespace TKServer
             get
             {
                 if (server == null)
+                {
                     server = new RemoteServer();
+                }
                 return server;
+            }
+        }
+
+        public void Init()
+        {
+            string tkmsg_out;
+            string tkmsg_in;
+            bool ok;
+
+            if (!TK_Initialized)
+            {
+                //tkmsg_in = File.ReadAllText("tkd_config.xml", Encoding.UTF8);
+                //Console.Write(string.Format("########## TKCommand IN:\n{0}\n", tkmsg_in));
+                //ok = tk.Command(tkmsg_in, out tkmsg_out, TKCallback);
+                //Console.Write(string.Format("########## TKCommand OUT: {0}\n{1}\n", (ok ? "OK" : "ERROR!"), tkmsg_out));
+
+                tkmsg_in = 
+                    "<tkmsg><init><devices><device>" +
+                    "<type>Callback</type>" +
+                    "<address>PSC Broadcom 5.1</address>" +
+                    "<sam_slots>1</sam_slots>" +
+                    "</device></devices></init></tkmsg>";
+                Console.Write(string.Format("########## TKCommand IN:\n{0}\n", tkmsg_in));
+                ok = tk.Command(tkmsg_in, out tkmsg_out, TKCallback);
+                Console.Write(string.Format("########## TKCommand OUT: {0}\n{1}\n", (ok ? "OK" : "ERROR!"), tkmsg_out));
             }
         }
 
