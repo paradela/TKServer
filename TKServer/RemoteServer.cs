@@ -45,7 +45,7 @@ namespace TKServer
             }
         }
 
-        public void Init()
+        public void Init(String SAMPort)
         {
             string tkmsg_out;
             string tkmsg_in;
@@ -53,17 +53,27 @@ namespace TKServer
 
             if (!TK_Initialized)
             {
-                //tkmsg_in = File.ReadAllText("tkd_config.xml", Encoding.UTF8);
-                //Console.Write(string.Format("########## TKCommand IN:\n{0}\n", tkmsg_in));
-                //ok = tk.Command(tkmsg_in, out tkmsg_out, TKCallback);
-                //Console.Write(string.Format("########## TKCommand OUT: {0}\n{1}\n", (ok ? "OK" : "ERROR!"), tkmsg_out));
+                tkmsg_in = File.ReadAllText("tkd_config.xml", Encoding.UTF8);
+                Console.Write(string.Format("########## TKCommand IN:\n{0}\n", tkmsg_in));
+                ok = tk.Command(tkmsg_in, out tkmsg_out, TKCallback);
+                Console.Write(string.Format("########## TKCommand OUT: {0}\n{1}\n", (ok ? "OK" : "ERROR!"), tkmsg_out));
 
                 tkmsg_in = 
                     "<tkmsg><init><devices><device>" +
                     "<type>Callback</type>" +
-                    "<address>PSC Broadcom 5.1</address>" +
+                    "<address>" + SAMPort + "</address>" +
                     "<sam_slots>1</sam_slots>" +
                     "</device></devices></init></tkmsg>";
+                Console.Write(string.Format("########## TKCommand IN:\n{0}\n", tkmsg_in));
+                ok = tk.Command(tkmsg_in, out tkmsg_out, TKCallback);
+                Console.Write(string.Format("########## TKCommand OUT: {0}\n{1}\n", (ok ? "OK" : "ERROR!"), tkmsg_out));
+
+                tkmsg_in = 
+                    "<tkmsg><config><service>" +
+                    "<provider>2</provider>" + 
+                    "<network>2</network>" +
+                    "<machine>123</machine>" +
+                    "</service></config></tkmsg>";
                 Console.Write(string.Format("########## TKCommand IN:\n{0}\n", tkmsg_in));
                 ok = tk.Command(tkmsg_in, out tkmsg_out, TKCallback);
                 Console.Write(string.Format("########## TKCommand OUT: {0}\n{1}\n", (ok ? "OK" : "ERROR!"), tkmsg_out));

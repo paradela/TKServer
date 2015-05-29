@@ -136,7 +136,7 @@ namespace TKServer
                     remoteServer.MasterRef = this.RemoteMaster;
                     webServer = WebApp.Start<Startup>(url: server.ServerWSUri);
                     this.Uri = server.ServerTcpUri;
-                    remoteServer.Init();
+                    remoteServer.Init(server.ServerSAMPort);
                 }
             }
 

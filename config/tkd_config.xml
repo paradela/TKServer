@@ -1,0 +1,105 @@
+<tkmsg>
+  <config>
+    <zones>
+      <zone ref="1000" name="CA-*" card_value="2214592512"/>
+      <zone ref="2000" name="ML-*" card_value="2281701376"/>
+      <zone ref="3000" name="CP-*" card_value="2348810240"/>
+      <zone ref="4000" name="TT-*" card_value="2415919104"/>
+      <zone ref="5000" name="TS-*" card_value="2483027968"/>
+      <zone ref="6000" name="RL-*" card_value="2550136832"/>
+      <zone ref="7000" name="SL-*" card_value="2617245696"/>
+      <zone ref="8000" name="TB-*" card_value="2684354560"/>
+      <zone ref="9000" name="VT-*" card_value="2751463424"/>
+      <zone ref="10000" name="SC-*" card_value="2818572288"/>
+      <zone ref="12000" name="ID-*" card_value="2952790016"/>
+      <zone ref="13000" name="BT-*" card_value="3019898880"/>
+      <zone ref="14000" name="JJ-*" card_value="3087007744"/>
+      <zone ref="15000" name="FT-*" card_value="3154116608"/>
+      <zone ref="16000" name="MS-*" card_value="3221225472"/>
+      <zone ref="18000" name="HM-*" card_value="3355443200"/>
+      <zone ref="24000" name="RT-*" card_value="3758096384"/>
+    </zones>
+    <products>
+      <product ref="33592" name="Zapping">
+        <attribs>
+          <attrib type="stored_value">
+            <dynamic required="false"/>
+          </attrib>
+          <attrib type="journey_duration_period">
+            <static>103:Sliding</static>
+          </attrib>
+          <attrib type="priority">
+            <static>02:Ticket</static>
+          </attrib>
+          <attrib type="zone_list">
+            <static>{1000,2000,3000,4000,5000,6000,7000,8000,9000,10000,12000,13000,14000,15000,16000,18000,24000}</static>
+          </attrib>
+          <attrib type="sale_device">
+            <dynamic required="true" />
+          </attrib>
+          <attrib type="sale_date">
+            <dynamic required="true"/>
+          </attrib>
+          <attrib type="sale_number_daily">
+            <dynamic required="true"/>
+          </attrib>
+        </attribs>
+        <tariffs>
+          <tariff ref="33592" name="Zapping">
+            <prices>
+              <price ref="33592" card_value="2065208" name="Zapping" long_name="Zapping">
+                <amount>500</amount>
+              </price>
+            </prices>
+          </tariff>
+        </tariffs>
+      </product>
+      <product ref="33593" name="Zapping Token">
+        <attribs>
+          <attrib type="stored_value">
+            <dynamic required="false"/>
+          </attrib>
+          <attrib type="journey_duration_period">
+            <static>103:Sliding</static>
+          </attrib>
+          <attrib type="priority">
+            <static>02:Ticket</static>
+          </attrib>
+          <attrib type="zone_list">
+            <static>{1000,2000,3000,4000,5000,6000,7000,8000,9000,10000,12000,13000,14000,15000,16000,18000,24000}</static>
+          </attrib>
+          <attrib type="sale_device">
+            <dynamic required="true" />
+          </attrib>
+          <attrib type="sale_date">
+            <dynamic required="true"/>
+          </attrib>
+          <attrib type="sale_number_daily">
+            <dynamic required="true"/>
+          </attrib>
+          <attrib type="fixed_period">
+            <static>05:Hours</static>
+           </attrib>
+           <attrib type="fixed_units">
+            <static>1</static>
+           </attrib>
+           <attrib type="date_initial">
+            <dynamic required="false"/>
+           </attrib>
+           <attrib type="date_final">
+            <dynamic required="false"/>
+           </attrib>
+        </attribs>
+        <tariffs>
+          <tariff ref="33593" name="Zapping">
+            <prices>
+              <price ref="33593" card_value="2065209" name="Zapp Tok" long_name="Zapping Token">
+                <amount>500</amount>
+              </price>
+            </prices>
+          </tariff>
+        </tariffs>
+      </product>
+    </products>
+  </config>
+</tkmsg>
