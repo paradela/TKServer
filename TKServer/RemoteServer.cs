@@ -193,12 +193,12 @@ namespace TKServer
             using (XmlReader reader = XmlReader.Create(new StringReader(tkmsg_in)))
             {
                 reader.ReadToFollowing("update");
-                string base64 = reader.ReadElementContentAsString();
                 reader.MoveToFirstAttribute();
                 uint address = UInt32.Parse(reader.Value);
                 reader.MoveToNextAttribute();
                 uint len = UInt32.Parse(reader.Value);
-                
+                reader.MoveToElement();
+                string base64 = reader.ReadElementContentAsString();
 
                 if (address >= 0 && len > 0 && address + len > 0 && base64.Length > 0)
                 {
@@ -207,6 +207,7 @@ namespace TKServer
                     write.Address = (int)address;
                     write.Len = (int)len;
                     Operations.Add(write);
+                    tkmsg_out = "<tkmsg><cts512b><update /></cts512b></tkmsg>";
                 }
             }
 
@@ -235,8 +236,10 @@ namespace TKServer
                         tkmsg_output = SearchCard(tkmsg_input);
                         break;
                     case (uint)TicketingKernel.Status.ANTENNAOFF:
+                        tkmsg_output = "";
                         break;
                     case (uint)TicketingKernel.Status.CALYPSO_TXRXTPDU:
+                        tkmsg_output = "";
                         break;
                     case (uint)TicketingKernel.Status.CTS512B_READ:
                         tkmsg_output = CTS512B_Read(tkmsg_input);
