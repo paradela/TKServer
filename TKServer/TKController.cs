@@ -35,10 +35,12 @@ namespace TKServer
         {
             IList<CTSWriteOperation> operations;
             String tkmsgout;
-            RemoteServer server = RemoteServer.Singleton;
-            server.RunCommand(id, body.tkmsg, out tkmsgout, out operations, body.card);
+            uint tkresult, tkstatus;
 
-            return new { tkmsg_out = tkmsgout, card_messages = operations };
+            RemoteServer server = RemoteServer.Singleton;
+            server.RunCommand(id, body.tkmsg, out tkstatus, out tkresult, out tkmsgout, out operations, body.card);
+
+            return new { status = tkstatus, result = tkresult ,msg = tkmsgout, card_messages = operations };
         }
     }
 }

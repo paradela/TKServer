@@ -36,8 +36,9 @@ namespace TKServer
             Card c = new Card();
             RemoteServer server = RemoteServer.Singleton;
             IList<CTSWriteOperation> operations;
-            string tjmsg;
-            server.RunCommand("id", "", out tjmsg, out operations, c, new ExAPDU(SendRcvMessage));
+            string tkmsg;
+            uint status, result;
+            server.RunCommand("id", "", out status, out result, out tkmsg, out operations, c, new ExAPDU(SendRcvMessage));
             //}
             Console.WriteLine(String.Format("Message Received"));
             

@@ -111,13 +111,23 @@ namespace TKServer
             }
         }
 
-        public void RunCommand(String Id, String TKMsgIn, out String TKMsgOut, out IList<CTSWriteOperation> CardOperations, Card Card = null, ExAPDU RdrCallback = null)
+        public void RunCommand(
+            String Id, 
+            String TKMsgIn, 
+            out uint TKStatus, 
+            out uint TKResult, 
+            out String TKMsgOut, 
+            out IList<CTSWriteOperation> CardOperations, 
+            Card Card = null, 
+            ExAPDU RdrCallback = null)
         {
             lock (Lock)
             {
                 bool ok = false;
                 Operations = CardOperations = new List<CTSWriteOperation>();
                 TKMsgOut = "";
+                TKResult = (uint)TicketingKernel.Result.GENERAL_ERROR;
+                TKStatus = (uint)TicketingKernel.Status.DETECTION;
 
                 if (JobId != Id || (Card == null && RdrCallback == null)) return;
                 //Call TK
@@ -132,7 +142,9 @@ namespace TKServer
                 if (!ok) return;
                 tk.Activity();
                 TKMsgOut = this.TKMsgOut;
-                if (this.TKResult != 0)
+                TKResult = this.TKResult;
+                TKStatus = this.TKStatus;
+                if (this.TKResult != (uint)TicketingKernel.Result.OK)
                 {
                     CardOperations.Clear();
                 }
