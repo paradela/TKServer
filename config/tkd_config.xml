@@ -94,7 +94,7 @@
           <tariff ref="33593" name="Zapping">
             <prices>
               <price ref="33593" card_value="2065209" name="Zapp Tok" long_name="Zapping Token">
-                <amount>500</amount>
+                <amount>100</amount>
               </price>
             </prices>
           </tariff>
