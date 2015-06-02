@@ -40,7 +40,7 @@ namespace TKServer
             RemoteServer server = RemoteServer.Singleton;
             server.RunCommand(id, body.tkmsg, out tkstatus, out tkresult, out tkmsgout, out operations, body.card);
 
-            return new { result = tkresult, msg = tkmsgout, card_messages = operations };
+            return new { status = tkstatus, result = tkresult, msg = tkmsgout, card_messages = operations };
         }
     }
 }
