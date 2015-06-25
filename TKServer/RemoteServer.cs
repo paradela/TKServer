@@ -233,14 +233,8 @@ namespace TKServer
             tkmsg_output = "";
 
             LogCallbackMessage(in_status, in_result, tkmsg_input);
-
-            if (in_status == (uint)TicketingKernel.Status.LOAD)
-            {
-                this.TKMsgOut = tkmsg_input;
-                this.TKStatus = in_status;
-                this.TKResult = in_result;
-            }
-            else if (in_status >= (uint)TicketingKernel.Status.ANTENNAOFF && in_status <= (uint)TicketingKernel.Status.CTS512B_UPDATE)
+            
+            if (in_status >= (uint)TicketingKernel.Status.ANTENNAOFF && in_status <= (uint)TicketingKernel.Status.CTS512B_UPDATE)
             {
                 switch (in_status)
                 {
@@ -268,6 +262,12 @@ namespace TKServer
                     out_result = (uint)TicketingKernel.Result.OK;
                 else
                     out_result = (uint)TicketingKernel.Result.GENERAL_ERROR;
+            }
+            else
+            {
+                this.TKMsgOut = tkmsg_input;
+                this.TKStatus = in_status;
+                this.TKResult = in_result;
             }
         }
 
