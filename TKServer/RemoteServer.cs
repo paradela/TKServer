@@ -123,6 +123,9 @@ namespace TKServer
         {
             lock (Lock)
             {
+                //Cancel any pending operations
+                tk.Cancel();
+
                 bool ok = false;
                 Operations = CardOperations = new List<CTSWriteOperation>();
                 TKMsgOut = "";
