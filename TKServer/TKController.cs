@@ -8,6 +8,11 @@ using Card4B;
 
 namespace TKServer
 {
+    public class Transaction
+    {
+        public String data { get; set; }
+    }
+
     public class ProductLoad
     {
         public String tkmsg { get; set; }
@@ -41,6 +46,17 @@ namespace TKServer
             server.RunCommand(id, body.tkmsg, out tkstatus, out tkresult, out tkmsgout, out operations, body.card);
 
             return new { status = tkstatus, result = tkresult, msg = tkmsgout, card_messages = operations };
+        }
+
+        public object PostDecode([FromUri] String id, [FromBody] Transaction body)
+        {
+            String tkmsgout;
+            uint tkresult;
+
+            RemoteServer server = RemoteServer.Singleton;
+            server.Decode(id, body.data, out tkresult, out tkmsgout);
+
+            return new { status = 0, result = tkresult, msg = tkmsgout, card_messages = 0 };
         }
     }
 }

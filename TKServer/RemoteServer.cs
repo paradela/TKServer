@@ -158,6 +158,30 @@ namespace TKServer
             }
         }
 
+        public void Decode(String Id, String TKMsgIn, out uint TKResult, out String TKMsgOut)
+        {
+            lock (Lock)
+            {
+                //Cancel any pending operations
+                tk.Cancel();
+
+                TKResult = (uint)TicketingKernel.Result.GENERAL_ERROR;
+                TKMsgOut = "";
+
+                if (JobId != Id) return;
+
+                Console.Write(string.Format("########## TKCommand IN:\n{0}\n", TKMsgIn));
+                bool ok = tk.Command(TKMsgIn, out TKMsgOut, TKCallback);
+                Console.Write(string.Format("########## TKCommand OUT: {0}\n{1}\n", (ok ? "OK" : "ERROR!"), TKMsgOut));
+
+                if (ok)
+                    TKResult = (uint)TicketingKernel.Result.OK;
+
+                if (MasterRef != null) MasterRef.JobFinished(Id);
+                Working = false;
+            }
+        }
+
         private string SearchCard(string tkmsg_in)
         {
             string tkmsg_out = null;
