@@ -48,7 +48,7 @@ namespace TKServer
             return new { status = tkstatus, result = tkresult, msg = tkmsgout, card_messages = operations };
         }
 
-        public object PostDecode([FromUri] String id, [FromBody] Transaction body)
+        /*public object PostDecode([FromUri] String id, [FromBody] Transaction body)
         {
             String tkmsgout;
             uint tkresult;
@@ -57,6 +57,6 @@ namespace TKServer
             server.Decode(id, body.data, out tkresult, out tkmsgout);
 
             return new { status = 0, result = tkresult, msg = tkmsgout, card_messages = 0 };
-        }
+        }*/
     }
 }

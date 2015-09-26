@@ -26,7 +26,7 @@
             <dynamic required="false"/>
           </attrib>
           <attrib type="journey_duration_period">
-            <static>103:Sliding</static>
+            <static>102:EndOfService</static>
           </attrib>
           <attrib type="priority">
             <static>02:Ticket</static>
@@ -60,7 +60,7 @@
             <dynamic required="false"/>
           </attrib>
           <attrib type="journey_duration_period">
-            <static>103:Sliding</static>
+            <static>102:EndOfService</static>
           </attrib>
           <attrib type="priority">
             <static>02:Ticket</static>
